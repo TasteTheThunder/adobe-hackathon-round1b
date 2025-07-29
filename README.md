@@ -57,7 +57,8 @@ This application processes multiple PDF documents and uses state-of-the-art Natu
 ### Prerequisites
 - Python 3.10+
 - 4GB+ RAM (for model processing)
-- less than 1GB storage (for model and dependencies)
+- 1GB storage (for model and dependencies)
+- Docker (optional, for containerized deployment)
 
 ### Local Development
 
@@ -74,14 +75,17 @@ This application processes multiple PDF documents and uses state-of-the-art Natu
 
 ### Docker Deployment
 
-The application includes an optimized Dockerfile for production deployment:
+The application includes an optimized Alpine-based Dockerfile for production deployment:
 
 ```bash
-# Build the optimized image
+# Build the ultra-minimal image
 docker build -t semantic-pdf-extractor .
 
-# Run the container
+# Run the container (if you have input/output directories)
 docker run --rm -v "${PWD}/input:/app/input" -v "${PWD}/output:/app/output" semantic-pdf-extractor
+
+# Run with just the application files (model needs to be included in build)
+docker run --rm semantic-pdf-extractor
 ```
 
 ## Usage
@@ -222,23 +226,25 @@ The application generates comprehensive JSON output:
 
 ## Docker Optimization
 
-The Dockerfile implements extreme size optimization:
+The Dockerfile implements ultra-minimal size optimization using Alpine Linux:
 
 ### **Multi-Stage Build**
-- **Builder Stage**: Installs dependencies and compiles packages
-- **Runtime Stage**: Minimal Debian slim with only essential components
+- **Builder Stage**: Alpine Linux with minimal build dependencies (gcc, musl-dev)
+- **Runtime Stage**: Clean Alpine Python image with virtual environment
 - **Size Target**: <1GB total image size
 
 ### **Optimization Techniques**
-- **CPU-Only PyTorch**: Excludes GPU dependencies for smaller size
-- **Minimal Dependencies**: Installs only essential packages
+- **Alpine Linux Base**: Ultra-lightweight Linux distribution
+- **Virtual Environment**: Isolated dependency management for clean separation
+- **Minimal Build Tools**: Only essential compilation dependencies
 - **Layer Optimization**: Efficient caching and cleanup
-- **Virtual Environment**: Isolated dependency management
+- **No Unnecessary Packages**: Streamlined for PDF processing only
 
 ### **Security Features**
-- **Non-Root User**: Runs as dedicated application user
-- **Minimal Attack Surface**: Only necessary packages installed
-- **Environment Isolation**: Containerized execution
+- **Non-Root User**: Runs as dedicated application user (appuser:appgroup)
+- **Minimal Attack Surface**: Alpine's security-focused minimal package set
+- **Environment Isolation**: Containerized execution with user isolation
+- **No Interactive Shell**: Security-hardened user configuration
 
 ## Use Cases
 
@@ -362,6 +368,18 @@ TOP_SECTIONS = 3  # Reduce from default 5
 - Ensure PDFs are not password-protected
 - Check file permissions and accessibility
 - Verify PDF format compatibility
+
+#### **Docker Issues**
+```bash
+# If model is not found in container, ensure it's copied during build
+COPY model/ ./model/
+
+# For volume mounting issues on Windows PowerShell:
+docker run --rm -v "${PWD}/input:/app/input" -v "${PWD}/output:/app/output" semantic-pdf-extractor
+
+# Alternative Windows Command Prompt syntax:
+docker run --rm -v "%CD%/input:/app/input" -v "%CD%/output:/app/output" semantic-pdf-extractor
+```
 
 ## License
 
